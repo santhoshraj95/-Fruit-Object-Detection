@@ -1,6 +1,8 @@
 streamlit
 ultralytics
 opencv-python-headless==4.9.0.80
+torch
+torchvision
 reportlab
 pandas
 openpyxl
