@@ -98,7 +98,7 @@ except Exception:
 # ---------------------------
 # Config & Paths
 # ---------------------------
-MODEL_PATH_DEFAULT = r"C:\Users\lenovo\Downloads\best (1).pt"
+MODEL_PATH_DEFAULT = "best.pt"
 DB_PATH = "retail.db"
 CURRENCY = "₹"
 DEFAULT_PRICE = {"apple": 30.0, "banana": 10.0, "orange": 25.0}
