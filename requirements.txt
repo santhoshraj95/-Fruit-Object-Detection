@@ -1,8 +1,6 @@
-streamlit==1.31.1
+streamlit
 ultralytics
-opencv-python-headless==4.9.0.80
-torch
-torchvision
+opencv-python-headless
 pandas
 numpy
 pillow
@@ -11,3 +9,5 @@ openpyxl
 qrcode
 requests
 streamlit-lottie
+torch
+torchvision
