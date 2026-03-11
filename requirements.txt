@@ -1,3 +1,4 @@
+
 streamlit
 ultralytics
 torch
@@ -11,4 +12,5 @@ qrcode
 streamlit-lottie
 requests
 numpy
+
 
