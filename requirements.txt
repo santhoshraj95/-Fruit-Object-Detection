@@ -1,0 +1,11 @@
+streamlit
+ultralytics
+opencv-python-headless
+reportlab
+pandas
+openpyxl
+pillow
+qrcode
+numpy
+requests
+streamlit-lottie
