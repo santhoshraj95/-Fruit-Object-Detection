@@ -1,10 +1,8 @@
-streamlit==1.31.1
-ultralytics==8.1.0
-opencv-python-headless==4.9.0.80
-torch==2.2.2
-torchvision==0.17.2
-pandas==2.2.2
-numpy==1.26.4
+streamlit
+ultralytics
+opencv-python-headless
+pandas
+numpy
 pillow
 reportlab
 openpyxl
