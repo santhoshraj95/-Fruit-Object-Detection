@@ -1,3 +1,7 @@
+"""
+Retail.py - Smart Retail Billing App (no cv2 dependency)
+"""
+
 import io
 import os
 import numpy as np
@@ -7,11 +11,13 @@ import pandas as pd
 import gdown
 
 # ── Optional YOLO ──────────────────────────────────────────────────────────────
+ULTRALYTICS_ERROR = None
 try:
     from ultralytics import YOLO
     HAS_ULTRALYTICS = True
-except Exception:
+except Exception as _e:
     HAS_ULTRALYTICS = False
+    ULTRALYTICS_ERROR = str(_e)
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 MODEL_PATH_DEFAULT = "best.pt"
@@ -98,10 +104,14 @@ def load_model():
 
 model = None
 if use_model:
-    try:
-        model = load_model()
-    except Exception as e:
-        st.sidebar.warning(f"Model not loaded: {e}")
+    if not HAS_ULTRALYTICS:
+        st.sidebar.error(f"❌ ultralytics import failed: {ULTRALYTICS_ERROR}")
+    else:
+        try:
+            model = load_model()
+            st.sidebar.success("✅ Model loaded!")
+        except Exception as e:
+            st.sidebar.warning(f"Model not loaded: {e}")
 
 # ── Helpers (Pillow-only, no cv2) ──────────────────────────────────────────────
 def detect_and_annotate(mdl, pil_img, conf=0.4):
