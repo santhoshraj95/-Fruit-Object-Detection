@@ -1,25 +1,13 @@
 """
-retail_billing_app.py
-
-Minimized Smart Retail Billing App:
-- Upload images OR use webcam
-- YOLOv8 detection (optional)
-- Sidebar: editable price list + checkout
-- No invoice generation, no DB, no extra tabs
-
-Install:
-    pip install streamlit ultralytics opencv-python-headless pillow
-
-Run:
-    streamlit run retail_billing_app.py
+Retail.py - Smart Retail Billing App (no cv2 dependency)
 """
 
 import io
 import os
 import numpy as np
 import streamlit as st
-from PIL import Image
-import cv2
+from PIL import Image, ImageDraw, ImageFont
+import pandas as pd
 import gdown
 
 # ── Optional YOLO ──────────────────────────────────────────────────────────────
@@ -69,15 +57,12 @@ conf_threshold = st.sidebar.slider("Confidence threshold", 0.1, 0.95, 0.45, 0.05
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 💰 Price List")
 
-import pandas as pd
-
 price_df = pd.DataFrame([
     {"item": k, "unit_price (₹)": v}
     for k, v in st.session_state.price_map.items()
 ])
 edited_prices = st.sidebar.data_editor(price_df, num_rows="dynamic", key="price_editor")
 
-# Sync edited prices back
 new_prices = {}
 for _, r in edited_prices.iterrows():
     if r["item"]:
@@ -87,7 +72,6 @@ st.session_state.price_map = new_prices
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🛍️ Checkout")
 
-# Build cart summary in sidebar
 cart_rows = []
 for item, qty in st.session_state.cart.items():
     unit = float(st.session_state.price_map.get(item, DEFAULT_PRICES.get(item, 0.0)))
@@ -98,7 +82,6 @@ if cart_rows:
     st.sidebar.dataframe(cart_df, use_container_width=True, hide_index=True)
     total = cart_df["Amount ₹"].sum()
     st.sidebar.markdown(f"**Total: ₹ {total:.2f}**")
-
     if st.sidebar.button("✅ Confirm & Clear Cart", type="primary"):
         st.sidebar.success(f"Order confirmed! Total: ₹ {total:.2f}")
         st.session_state.cart = {}
@@ -124,15 +107,16 @@ if use_model:
     except Exception as e:
         st.sidebar.warning(f"Model not loaded: {e}")
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
-def pil_to_bgr(img_pil):
-    img = np.array(img_pil.convert("RGB"))
-    return cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+# ── Helpers (Pillow-only, no cv2) ──────────────────────────────────────────────
+def detect_and_annotate(mdl, pil_img, conf=0.4):
+    """Run YOLO on a PIL image, draw boxes with Pillow, return counts + annotated PIL."""
+    img_rgb = np.array(pil_img.convert("RGB"))
+    results = mdl(img_rgb, conf=conf)[0]
 
-def detect_and_annotate(mdl, img_bgr, conf=0.4):
-    results = mdl(img_bgr, conf=conf)[0]
     counts = {}
-    img = img_bgr.copy()
+    draw_img = pil_img.convert("RGB").copy()
+    draw = ImageDraw.Draw(draw_img)
+
     for box in results.boxes:
         x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
         cls = int(box.cls[0])
@@ -140,10 +124,13 @@ def detect_and_annotate(mdl, img_bgr, conf=0.4):
         name = results.names[cls]
         counts[name] = counts.get(name, 0) + 1
         label = f"{name} {confidence:.2f}"
-        cv2.rectangle(img, (x1, y1), (x2, y2), (20, 200, 20), 2)
-        cv2.putText(img, label, (x1, max(15, y1 - 5)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (20, 200, 20), 2)
-    return counts, cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+        draw.rectangle([x1, y1, x2, y2], outline=(20, 200, 20), width=3)
+        text_bbox = draw.textbbox((x1, max(0, y1 - 20)), label)
+        draw.rectangle(text_bbox, fill=(20, 200, 20))
+        draw.text((x1, max(0, y1 - 20)), label, fill=(255, 255, 255))
+
+    return counts, draw_img
 
 # ── Main area ──────────────────────────────────────────────────────────────────
 col_left, col_right = st.columns([2, 1])
@@ -165,12 +152,11 @@ with col_left:
         sources.append(("camera.jpg", Image.open(camera_img)))
 
     for name, pil in sources:
-        bgr = pil_to_bgr(pil)
         if use_model and model:
-            counts, annotated = detect_and_annotate(model, bgr, conf=conf_threshold)
+            counts, annotated = detect_and_annotate(model, pil, conf=conf_threshold)
         else:
             counts = {}
-            annotated = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+            annotated = pil.convert("RGB")
         for k, v in counts.items():
             detections_aggregate[k] = detections_aggregate.get(k, 0) + v
         annotated_list.append((name, annotated))
