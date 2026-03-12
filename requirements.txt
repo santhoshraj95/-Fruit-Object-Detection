@@ -1,16 +1,11 @@
-
 streamlit
 ultralytics
-torch
-torchvision
 opencv-python-headless
-reportlab
 pandas
-openpyxl
+numpy
 pillow
 qrcode
-streamlit-lottie
 requests
-numpy
-
+streamlit-lottie
+openpyxl
 
