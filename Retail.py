@@ -15,10 +15,12 @@ Run:
 """
 
 import io
+import os
 import numpy as np
 import streamlit as st
 from PIL import Image
 import cv2
+import gdown
 
 # ── Optional YOLO ──────────────────────────────────────────────────────────────
 try:
@@ -29,8 +31,17 @@ except Exception:
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 MODEL_PATH_DEFAULT = "best.pt"
+GDRIVE_FILE_ID = "1WKLrXwLzOJNoqYEJBWZGRpDMO6IQFWRv"
 CURRENCY = "₹"
 DEFAULT_PRICES = {"apple": 30.0, "banana": 10.0, "orange": 25.0}
+
+def ensure_model(dest="best.pt"):
+    """Download model from Google Drive if not already present."""
+    if not os.path.exists(dest):
+        with st.spinner("📥 Downloading model from Google Drive..."):
+            url = f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}"
+            gdown.download(url, dest, quiet=False)
+    return dest
 
 # ── Page setup ─────────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Smart Retail – Billing", layout="wide")
@@ -53,7 +64,6 @@ if "cart" not in st.session_state:
 st.sidebar.header("⚙️ Settings")
 
 use_model = st.sidebar.checkbox("Use YOLO auto-detection", value=True)
-model_path = st.sidebar.text_input("Model path", value=MODEL_PATH_DEFAULT)
 conf_threshold = st.sidebar.slider("Confidence threshold", 0.1, 0.95, 0.45, 0.05)
 
 st.sidebar.markdown("---")
@@ -101,15 +111,16 @@ if st.sidebar.button("🗑️ Clear Cart"):
 
 # ── Model loading ──────────────────────────────────────────────────────────────
 @st.cache_resource
-def load_model(path):
+def load_model():
     if not HAS_ULTRALYTICS:
-        raise RuntimeError("ultralytics not installed. Run: pip install ultralytics")
+        raise RuntimeError("ultralytics not installed.")
+    path = ensure_model(MODEL_PATH_DEFAULT)
     return YOLO(path)
 
 model = None
 if use_model:
     try:
-        model = load_model(model_path)
+        model = load_model()
     except Exception as e:
         st.sidebar.warning(f"Model not loaded: {e}")
 
