@@ -1,7 +1,3 @@
-"""
-Retail.py - Smart Retail Billing App (no cv2 dependency)
-"""
-
 import io
 import os
 import numpy as np
